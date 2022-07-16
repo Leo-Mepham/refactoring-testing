@@ -3,8 +3,8 @@ using ClearBank.DeveloperTest.Types;
 
 namespace ClearBank.DeveloperTest.Factories
 {
-    public interface IAccountDataStoreFactory
+    public interface IDataStoreFactory
     {
-        IAccountDataStore Get(DataStoreType dataStoreType);
+        IDataStore Get(DataStoreType dataStoreType);
     }
 }

@@ -4,9 +4,9 @@ using ClearBank.DeveloperTest.Types;
 
 namespace ClearBank.DeveloperTest.Factories
 {
-    public class AccountDataStoreFactory : IAccountDataStoreFactory
+    public class DataStoreFactory : IDataStoreFactory
     {
-        public IAccountDataStore Get(DataStoreType dataStoreType)
+        public IDataStore Get(DataStoreType dataStoreType)
         {
             switch (dataStoreType)
             {

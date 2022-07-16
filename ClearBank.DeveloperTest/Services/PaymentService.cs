@@ -5,70 +5,35 @@ namespace ClearBank.DeveloperTest.Services
 {
     public class PaymentService : IPaymentService
     {
-        private readonly IAccountDataStoreFactory _accountDataStoreFactory;
+        private readonly IDataStoreFactory _dataStoreFactory;
         private readonly IConfigurationService _configurationService;
+        private readonly IRuleEvaluatorFactory _ruleEvaluatorFactory;
 
         public PaymentService(
-            IAccountDataStoreFactory accountDataStoreFactory,
-            IConfigurationService configurationService)
+            IDataStoreFactory dataStoreFactory,
+            IConfigurationService configurationService,
+            IRuleEvaluatorFactory ruleEvaluatorFactory)
         {
             // Assuming DI is present
-            _accountDataStoreFactory = accountDataStoreFactory;
+            _dataStoreFactory = dataStoreFactory;
             _configurationService = configurationService;
+            _ruleEvaluatorFactory = ruleEvaluatorFactory;
         }
 
         public MakePaymentResult MakePayment(MakePaymentRequest request)
         {
             var dataStoreType = _configurationService.GetDataStoreType();
-            var accountDataStore = _accountDataStoreFactory.Get(dataStoreType);
+            var accountDataStore = _dataStoreFactory.Get(dataStoreType);
             var account = accountDataStore.GetAccount(request.DebtorAccountNumber);
 
-            var result = new MakePaymentResult();
-            result.Success = true;  
+            if (account == null)
+                return new MakePaymentResult { Success = false };
 
-            switch (request.PaymentScheme)
+            var ruleEvaluator = _ruleEvaluatorFactory.Get(request.PaymentScheme);
+            var result = new MakePaymentResult
             {
-                case PaymentScheme.Bacs:
-                    if (account == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!account.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.Bacs))
-                    {
-                        result.Success = false;
-                    }
-                    break;
-
-                case PaymentScheme.FasterPayments:
-                    if (account == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!account.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.FasterPayments))
-                    {
-                        result.Success = false;
-                    }
-                    else if (account.Balance < request.Amount)
-                    {
-                        result.Success = false;
-                    }
-                    break;
-
-                case PaymentScheme.Chaps:
-                    if (account == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!account.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.Chaps))
-                    {
-                        result.Success = false;
-                    }
-                    else if (account.Status != AccountStatus.Live)
-                    {
-                        result.Success = false;
-                    }
-                    break;
-            }
+                Success = ruleEvaluator.Evaluate(request, account)
+            };
 
             if (result.Success)
             {

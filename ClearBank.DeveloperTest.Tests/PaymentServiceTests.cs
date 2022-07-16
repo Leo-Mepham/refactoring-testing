@@ -46,6 +46,7 @@ namespace ClearBank.DeveloperTest.Tests
 
             // Assert
             result.Success.Should().BeFalse();
+            dataStore.Verify(ds => ds.UpdateAccount(account), Times.Never);
         }
 
         [Theory]
@@ -69,6 +70,7 @@ namespace ClearBank.DeveloperTest.Tests
 
             // Assert
             result.Success.Should().BeTrue();
+            dataStore.Verify(ds => ds.UpdateAccount(account), Times.Once);
         }
     }
 }
